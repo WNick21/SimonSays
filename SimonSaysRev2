@@ -1,0 +1,136 @@
+#define RED 4 //Red LED
+#define GREEN 5 //Green LED
+#define BLUE 6 //BLUE LED
+#define YELLOW 7 //Yellow LED
+
+#define BUZZ 8 //PWM Buzzer
+
+#define RSW 0 //Red Switch
+#define GSW 1 //Green Switch
+#define BSW 2 //Blue Switch
+#define YSW 3 //Yellow Switch
+const uint8_t LEDMask = 0b11110000;
+const uint8_t SwitchMask = 0b00001111;
+
+int MyArray[5] = {1,2,4,8,4}; //This is an array of randomly generated numbers that make up the sequence
+int testArray[5] = {0,0,0,0,0}; //This is an array of user inputs MAY NOT BE NEEDED
+/*
+LEDOut turns on LEDs
+*/
+void LEDOut(uint8_t RedLED, uint8_t GreenLED, uint8_t BlueLED, uint8_t YellowLED)
+{
+  uint8_t LEDOutput = 0b00000000;
+  if (RedLED == 1) LEDOutput |= _BV(RED);
+  if (GreenLED == 1) LEDOutput |= _BV(GREEN);
+  if (BlueLED == 1) LEDOutput |= _BV(BLUE);
+  if (YellowLED == 1) LEDOutput |= _BV(YELLOW);
+  PORTD &= ~LEDMask; //Clear LEDs
+  PORTD |= LEDOutput; //Turn on LEDs
+}
+/*
+turnON displays which button has been pushed
+*/
+uint8_t turnON(uint8_t x)
+{
+  if (x == 8) LEDOut(0,0,0,1);
+else if (x == 4) LEDOut(0,0,1,0); //Both buttons pushed, all three LEDs on
+else if (x == 2) LEDOut(0,1,0,0); //One Button Pushed one LED on
+else if (x == 1) LEDOut(1,0,0,0); //One Button Pushed one LED on
+else LEDOut(0,0,0,0);//No Buttons, nothing on
+}
+/*
+This function takes an input from the user and then displays which button has been pressed via LED
+*/
+uint8_t SwitchIn()
+{
+uint8_t  t = (~PIND & SwitchMask); //Because the switches are active LOW the input must be inverted
+  turnON(t);//Show which LED has been turned on
+ // return (~PIND & SwitchMask);
+ return t;
+}
+/*
+In the set up the port is configured to which pins will be input/outputs and which will have
+pull-up resistors. Furthermore, it cycles through all the LEDs to ensure proper function
+*/
+void setup() {
+  // put your setup code here, to run once:
+DDRD = 0b11110000; //Setting the Red, Green, and Blue LEDs to output. Switches 1 & 2 to inputs -- B G R SW2 SW1 X X X 
+PORTD = 0b00001111; //turn on the pull up resistors for the switches
+LEDOut(0,0,0,1);// Test Yellow
+delay(500);
+LEDOut(0,0,1,1);//Test BLUE
+delay(500);
+LEDOut(0,1,1,1);//Test GREEN
+delay(500);
+LEDOut(1,1,1,1);//Test RED
+delay(1000);
+LEDOut(0,0,0,0);
+}
+/*
+disp is a function used to clean up the main loop. It turns on the LEDs in the correct sequence
+that the player will have to memorize. It takes an input i which is the where you are in the
+sequence currently and then displays all the steps leading up to and including that number
+*/ 
+void disp(int i){
+  
+  for (int a = 0; a <= i; a++){
+  LEDOut(0,0,0,0); //turn All the LEDs off
+  if (MyArray[a] == 1){LEDOut(1,0,0,0);delay(500);} //Turn on RED LED, wait 500 miliseconds
+
+  if (MyArray[a] == 2){ LEDOut(0,1,0,0); delay(500);} //Turn on GREEN LED, wait 500 miliseconds
+
+  if (MyArray[a] == 4){ LEDOut(0,0,1,0); delay(500);} //Turn on BLUE LED, wait 500 miliseconds
+
+  if (MyArray[a] == 8){ LEDOut(0,0,0,1); delay(500);} //Turn on Yellow LED, wait 500 miliseconds
+ 
+  //else LEDOut(0,1,0,1);
+   // delay(500);
+  }
+}
+
+/*
+endGame is a function used to signify the game has ended by the user entering the
+wrong sequence
+*/
+void endGame(int j){
+ // if(SwitchIn() != MyArray[j]){
+        LEDOut(1,0,1,0);
+        delay(500);
+        LEDOut(0,1,0,1);
+        delay(500);
+//}
+}
+
+void loop() {
+
+int i=0; //i used for counting
+int j=0; //j used for counting
+  for (i = 0; i<=4; i++) { //This first for loop counts the "next" number in the sequnce
+   delay(500);
+    disp(i); //Show the sequence to the user
+    //Serial.print("a"); //Used as a debugging tool. DELETE ME
+   int flag = 0; //flag used to hold the system for user input
+    
+    for(j = 0; j <=i; j++){ //For loop that takes in the user input
+      int SCount = -1; //Variable used to keep the endgame function from starting early
+      while (flag <= j ){ // Hold for user input
+      //uint8_t x = SwitchIn();
+     // testArray[j] = x;
+      // while(SwitchIn() == 0){
+        if(SwitchIn() == MyArray[j]){ //If the user presses the right switch
+          delay(30); //Debouncer
+          //turnON(testArray[j]);//Display he has pressed the correct switch
+          turnON(MyArray[j]);
+          flag += 1; //Add to the flag, if flag > j go back to first for loop 
+       // }
+       // if((SwitchIn() != MyArray[j]) && (SCount == j)){
+       //   endGame(j);
+       // }
+       }
+     // SCount += 1;
+    }
+    
+  }
+  //uint8_t x = SwitchIn();
+  }
+}
